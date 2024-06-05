@@ -5,9 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
     <title>Rock Paper Scissors</title>
+    <script defer src="script.js"></script>
   </head>
   <body>
-    <h1>Play in the console (F12)</h1>
-    <script src="script.js"></script>
+    <div class="game-box">
+      <h1>Rock, Paper, Scissors</h1>
+      <div class="choice-box">
+        <button class="choices" id="rock">Rock</button>
+        <button class="choices" id="paper">Paper</button>
+        <button class="choices" id="scissors">Scissors</button>
+      </div>
+
+      <div class="round-box">
+        <img
+          id="player-choice"
+          alt="Player's Choice"
+          width="100px"
+          height="100px"
+        />
+
+        <div class="results-box">
+          <h2>Results</h2>
+          <div class="scores-box">
+            <p id="wins">Wins: 0</p>
+            <p id="losses">Losses: 0</p>
+            <p id="ties">Ties: 0</p>
+          </div>
+        </div>
+
+        <img id="ai-choice" alt="AI Choice" width="100px" height="100px" />
+      </div>
+
+      <div class="rules-box">
+        <h1>Rules</h1>
+        <ol class="rules">
+          <li>
+            Choosing an option above will automatically play a round against a
+            randomly selected choice from the AI.
+          </li>
+          <li>The first to 5 points wins.</li>
+          <li>
+            Rock beats Scissors, Paper beats Rock, and Scissors beats Paper. If
+            your choice is the same as the AI's, it will count as a tie.
+          </li>
+        </ol>
+      </div>
+    </div>
   </body>
 </html>

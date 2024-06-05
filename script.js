@@ -1,12 +1,34 @@
+// Variable declarations
 const CHOICES = ["rock", "paper", "scissors"];
 const SCORE = {
-  ties: 0,
   wins: 0,
   losses: 0,
+  ties: 0,
 };
 
-function capitalizeFirstLetter(string) {
-  return string[0].toUpperCase() + string.slice(1);
+const choiceBox = document.querySelector(".choice-box");
+const scoresBox = document.querySelector(".scores-box");
+
+const wins = document.querySelector("#wins");
+const losses = document.querySelector("#losses");
+const ties = document.querySelector("#ties");
+
+const playerChoice = document.querySelector("#player-choice");
+const aiChoice = document.querySelector("#ai-choice");
+
+// Functions
+function clearScore() {
+  for (const result in SCORE) {
+    SCORE[result] = 0;
+  }
+}
+
+function getWinner() {
+  if (SCORE.wins === 5) {
+    return "You won!";
+  } else if (SCORE.losses === 5) {
+    return "You lost!";
+  }
 }
 
 function getRandomNumber(lowerLim, upperLim) {
@@ -17,51 +39,76 @@ function getComputerChoice() {
   return CHOICES[getRandomNumber(0, 2)];
 }
 
-function getPlayerChoice() {
-  let playerChoice;
-
-  while (!CHOICES.includes(playerChoice)) {
-    playerChoice = prompt("Please enter Rock, Paper, or Scissors: ");
-    playerChoice = playerChoice.toLowerCase();
-
-    if (!CHOICES.includes(playerChoice)) {
-      alert("Incorrect entry. Try again.");
-    }
+function getImage(choice) {
+  if (choice === "rock") {
+    return "./images/rock.svg";
+  } else if (choice === "paper") {
+    return "./images/paper.svg";
+  } else if (choice === "scissors") {
+    return "./images/scissors.svg";
   }
-
-  return playerChoice;
 }
 
-function playRound(playerSelection, computerSelection) {
-  playerSelection = capitalizeFirstLetter(playerSelection);
-  computerSelection = capitalizeFirstLetter(computerSelection);
+function getRoundImages(player, ai) {
+  playerChoice.setAttribute("src", getImage(player));
+  playerChoice.style.backgroundColor = "transparent";
+  aiChoice.setAttribute("src", getImage(ai));
+  aiChoice.style.backgroundColor = "transparent";
+}
+
+function capitalizeFirstLetter(string) {
+  return string[0].toUpperCase() + string.slice(1);
+}
+
+function getRound(playerSelection, computerSelection) {
   // Game Logic
   if (playerSelection === computerSelection) {
     SCORE.ties += 1;
-    return `You tie! You both chose ${playerSelection}.`;
-  } else if (playerSelection === "Rock" && computerSelection === "Scissors") {
+  } else if (playerSelection === "rock" && computerSelection === "scissors") {
     SCORE.wins += 1;
-    return `You win! ${playerSelection} beats ${computerSelection}.`;
-  } else if (playerSelection === "Paper" && computerSelection === "Rock") {
+  } else if (playerSelection === "paper" && computerSelection === "rock") {
     SCORE.wins += 1;
-    return `You win! ${playerSelection} beats ${computerSelection}.`;
-  } else if (playerSelection === "Scissors" && computerSelection === "Paper") {
+  } else if (playerSelection === "scissors" && computerSelection === "paper") {
     SCORE.wins += 1;
-    return `You win! ${playerSelection} beats ${computerSelection}.`;
   } else {
     SCORE.losses += 1;
-    return `You lose! ${computerSelection} beats ${playerSelection}`;
-  }
-}
-
-function playGame() {
-  for (let i = 0; i < 5; i++) {
-    console.log(playRound(getPlayerChoice(), getComputerChoice()));
   }
 
-  console.log(
-    `Wins: ${SCORE.wins}\tLosses: ${SCORE.losses}\tTies: ${SCORE.ties}`,
-  );
+  const scoreUpdate = new CustomEvent("scoreUpdate", {
+    detail: "Occurs whenever the SCORE is updated.",
+  });
+
+  scoresBox.dispatchEvent(scoreUpdate);
 }
 
-playGame();
+// Event Listeners
+
+choiceBox.addEventListener("click", (event) => {
+  const choice = event.target.id;
+  const comChoice = getComputerChoice();
+  // console.log(aiChoice);
+
+  // Prevents clicking elsewhere in the box throwing an error
+  if (!CHOICES.includes(choice)) return;
+
+  getRound(choice, comChoice);
+  getRoundImages(choice, comChoice);
+});
+
+scoresBox.addEventListener("scoreUpdate", () => {
+  // nodeList is a HTMLCollection
+  const nodeList = scoresBox.children;
+
+  if (SCORE.wins === 5 || SCORE.losses === 5) {
+    // endgame()
+    console.log(getWinner());
+    clearScore();
+  }
+
+  for (let i = 0; i < nodeList.length; i++) {
+    const node = nodeList.item(i);
+    const id = node.id;
+
+    node.textContent = `${capitalizeFirstLetter(id)}: ${SCORE[id]}`;
+  }
+});
