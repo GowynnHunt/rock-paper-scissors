@@ -4,39 +4,81 @@ const SCORE = {
   wins: 0,
   losses: 0,
   ties: 0,
+  rounds: 0,
 };
 
-const choiceBox = document.querySelector(".choice-box");
-const scoresBox = document.querySelector(".scores-box");
+const elemChoiceBox = document.querySelector(".choice-box");
+const elemScoresBox = document.querySelector(".scores-box");
+const elemGamesBox = document.querySelector(".game-box");
+const elemRulesBox = document.querySelector(".rules-box");
+const elemLogBox = document.querySelector(".log-box");
 
-const wins = document.querySelector("#wins");
-const losses = document.querySelector("#losses");
-const ties = document.querySelector("#ties");
+const elemLogList = document.querySelector(".log-box ol");
 
-const playerChoice = document.querySelector("#player-choice");
-const aiChoice = document.querySelector("#ai-choice");
+const elemPlayerChoice = document.querySelector("#player-choice");
+const elemAiChoice = document.querySelector("#ai-choice");
+
+const scoreUpdate = new CustomEvent("scoreUpdate", {
+  detail: "Occurs whenever the SCORE is updated.",
+});
+
+const elemResetButton = document.createElement("button");
+elemResetButton.setAttribute("id", "reset-button");
+elemResetButton.setAttribute("class", "choices");
+elemResetButton.textContent = "Reset";
 
 // Functions
-function clearScore() {
-  for (const result in SCORE) {
-    SCORE[result] = 0;
+
+function endGame() {
+  // Prevent Play
+  elemChoiceBox.removeEventListener("click", choiceHandler);
+
+  // Reset Button
+  elemGamesBox.insertBefore(elemResetButton, elemLogBox);
+}
+
+function resetGame() {
+  for (const property in SCORE) {
+    SCORE[property] = 0;
+  }
+
+  removeChildNodes(elemLogList);
+  elemChoiceBox.addEventListener("click", choiceHandler);
+  elemScoresBox.dispatchEvent(scoreUpdate);
+  clearRoundImages();
+  elemResetButton.remove();
+}
+
+function removeChildNodes(node) {
+  while (node.firstChild) {
+    node.removeChild(node.firstChild);
   }
 }
 
-function getWinner() {
-  if (SCORE.wins === 5) {
-    return "You won!";
-  } else if (SCORE.losses === 5) {
-    return "You lost!";
+function getLogText(playerChoice, aiChoice, result) {
+  switch (result) {
+    case "win":
+      return `Round ${SCORE.rounds}: ${getCapitalized(playerChoice)} beats ${getCapitalized(aiChoice)}. You win!`;
+    case "loss":
+      return `Round ${SCORE.rounds}: ${getCapitalized(aiChoice)} beats ${getCapitalized(playerChoice)}. You lose!`;
+    case "tie":
+      return `Round ${SCORE.rounds}: ${getCapitalized(aiChoice)} ties with ${getCapitalized(playerChoice)}. You tie!`;
   }
 }
 
-function getRandomNumber(lowerLim, upperLim) {
-  return Math.floor(Math.random() * (upperLim + 1)) + lowerLim;
+function getLogNode(logText) {
+  const logNode = document.createElement("li");
+  logNode.textContent = logText;
+  elemLogList.appendChild(logNode);
 }
 
-function getComputerChoice() {
-  return CHOICES[getRandomNumber(0, 2)];
+function getCapitalized(string) {
+  return string[0].toUpperCase() + string.slice(1);
+}
+
+function getAiChoice() {
+  const randomNumber = Math.floor(Math.random() * (2 + 1)) + 0;
+  return CHOICES[randomNumber];
 }
 
 function getImage(choice) {
@@ -50,65 +92,85 @@ function getImage(choice) {
 }
 
 function getRoundImages(player, ai) {
-  playerChoice.setAttribute("src", getImage(player));
-  playerChoice.style.backgroundColor = "transparent";
-  aiChoice.setAttribute("src", getImage(ai));
-  aiChoice.style.backgroundColor = "transparent";
+  elemPlayerChoice.setAttribute("src", getImage(player));
+  elemPlayerChoice.style.backgroundColor = "transparent";
+  elemAiChoice.setAttribute("src", getImage(ai));
+  elemAiChoice.style.backgroundColor = "transparent";
 }
 
-function capitalizeFirstLetter(string) {
-  return string[0].toUpperCase() + string.slice(1);
+function clearRoundImages() {
+  elemPlayerChoice.setAttribute("src", "");
+  elemPlayerChoice.style.backgroundColor = "#2a3749";
+  elemAiChoice.setAttribute("src", "");
+  elemAiChoice.style.backgroundColor = "#2a3749";
 }
 
-function getRound(playerSelection, computerSelection) {
-  // Game Logic
-  if (playerSelection === computerSelection) {
-    SCORE.ties += 1;
-  } else if (playerSelection === "rock" && computerSelection === "scissors") {
-    SCORE.wins += 1;
-  } else if (playerSelection === "paper" && computerSelection === "rock") {
-    SCORE.wins += 1;
-  } else if (playerSelection === "scissors" && computerSelection === "paper") {
-    SCORE.wins += 1;
+function playRound(playerChoice, aiChoice) {
+  SCORE.rounds += 1;
+  let result;
+
+  if (playerChoice === aiChoice) {
+    result = "tie";
+  } else if (playerChoice === "rock" && aiChoice === "scissors") {
+    result = "win";
+  } else if (playerChoice === "paper" && aiChoice === "rock") {
+    result = "win";
+  } else if (playerChoice === "scissors" && aiChoice === "paper") {
+    result = "win";
   } else {
-    SCORE.losses += 1;
+    result = "loss";
   }
 
-  const scoreUpdate = new CustomEvent("scoreUpdate", {
-    detail: "Occurs whenever the SCORE is updated.",
-  });
+  switch (result) {
+    case "tie":
+      SCORE.ties += 1;
+      break;
+    case "win":
+      SCORE.wins += 1;
+      break;
+    case "loss":
+      SCORE.losses += 1;
+      break;
+  }
 
-  scoresBox.dispatchEvent(scoreUpdate);
+  getLogNode(getLogText(playerChoice, aiChoice, result));
+  getRoundImages(playerChoice, aiChoice);
+
+  elemScoresBox.dispatchEvent(scoreUpdate);
 }
 
-// Event Listeners
+// Event Listeners & Handler(s)
 
-choiceBox.addEventListener("click", (event) => {
-  const choice = event.target.id;
-  const comChoice = getComputerChoice();
-  // console.log(aiChoice);
+function choiceHandler(event) {
+  const playerChoice = event.target.id;
+  const aiChoice = getAiChoice();
 
   // Prevents clicking elsewhere in the box throwing an error
-  if (!CHOICES.includes(choice)) return;
+  if (!CHOICES.includes(playerChoice)) return;
 
-  getRound(choice, comChoice);
-  getRoundImages(choice, comChoice);
-});
+  playRound(playerChoice, aiChoice);
+}
 
-scoresBox.addEventListener("scoreUpdate", () => {
+elemChoiceBox.addEventListener("click", choiceHandler);
+
+elemScoresBox.addEventListener("scoreUpdate", () => {
   // nodeList is a HTMLCollection
-  const nodeList = scoresBox.children;
-
-  if (SCORE.wins === 5 || SCORE.losses === 5) {
-    // endgame()
-    console.log(getWinner());
-    clearScore();
-  }
+  const nodeList = elemScoresBox.children;
 
   for (let i = 0; i < nodeList.length; i++) {
     const node = nodeList.item(i);
     const id = node.id;
 
-    node.textContent = `${capitalizeFirstLetter(id)}: ${SCORE[id]}`;
+    node.textContent = `${getCapitalized(id)}: ${SCORE[id]}`;
+  }
+
+  if (SCORE.wins === 5) {
+    getLogNode(`Congratulations, you beat the AI!`);
+    endGame();
+  } else if (SCORE.losses === 5) {
+    getLogNode(`You lost to the AI. Better luck next time!`);
+    endGame();
   }
 });
+
+elemResetButton.addEventListener("click", resetGame);
