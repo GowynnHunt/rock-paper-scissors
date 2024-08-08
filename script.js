@@ -77,7 +77,7 @@ function getCapitalized(string) {
 }
 
 function getAiChoice() {
-  const randomNumber = Math.floor(Math.random() * (2 + 1)) + 0;
+  const randomNumber = Math.floor(Math.random() * CHOICES.length);
   return CHOICES[randomNumber];
 }
 
